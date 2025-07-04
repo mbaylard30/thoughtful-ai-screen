@@ -12,14 +12,8 @@ interface Message {
 }
 
 export default function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Hello! I\'m your Thoughtful AI support assistant. I can help you with questions about our company, services, and more. How can I assist you today?',
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -27,6 +21,19 @@ export default function ChatInterface() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  // Initialize welcome message on client side only
+  useEffect(() => {
+    if (!isInitialized) {
+      setMessages([{
+        id: '1',
+        text: 'Hello! I\'m your Thoughtful AI support assistant. I can help you with questions about our company, services, and more. How can I assist you today?',
+        isUser: false,
+        timestamp: new Date(),
+      }])
+      setIsInitialized(true)
+    }
+  }, [isInitialized])
 
   useEffect(() => {
     scrollToBottom()
@@ -93,7 +100,12 @@ export default function ChatInterface() {
     <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
       {/* Messages Container */}
       <div className="h-96 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
+        {!isInitialized && (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-pulse text-gray-500">Loading...</div>
+          </div>
+        )}
+        {isInitialized && messages.map((message) => (
           <div
             key={message.id}
             className={`flex items-start space-x-3 ${
@@ -123,7 +135,7 @@ export default function ChatInterface() {
             </div>
           </div>
         ))}
-        {isLoading && (
+        {isInitialized && isLoading && (
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
               <Bot size={16} />
@@ -149,11 +161,11 @@ export default function ChatInterface() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={isLoading}
+            disabled={isLoading || !isInitialized}
           />
           <button
             type="submit"
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || !input.trim() || !isInitialized}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send size={18} />
